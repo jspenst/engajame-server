@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  admin:
+    build: ./admin
+    container_name: admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - supabase
+    environment:
+      - NODE_ENV=production
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./n8n:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=senha_super_secreta
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - admin
+
+  supabase:
+    image: supabase/postgres
+    container_name: supabase
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./supabase/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgres
