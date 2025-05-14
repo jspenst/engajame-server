@@ -23,15 +23,16 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('sites')
         .select(
-          `* , hero_sections(*), services_sections(*, services_items(*)), faqs_sections(*), portfolio_sections(*), testimonials_sections(*), teams(*)`
+          `* , hero_sections(*), services_sections(*, services_items(*)), faqs_sections(*), portfolio_sections(*, portfolio_items(*)), testimonials_sections(*), teams(*)`
         )
         .eq('owner', user.id)
         .single()
-      console.log(data)
       if (!error) setSiteData(data)
       setLoading(false)
+      console.log(data)
     }
     fetchSite()
+    
   }, [user])
 
   return <SiteContext.Provider value={{ siteData, loading }}>{children}</SiteContext.Provider>

@@ -2,28 +2,12 @@ import Aside from '@/components/aside'
 import Header from '@/components/header'
 import { SiteProvider } from '@/context/site-context'
 import { UserProvider } from '@/context/user-context'
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
 
 export default async function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return redirect('/sign-in')
-  }
-
-  const { data: siteData } = await supabase
-    .from('sites')
-    .select('*, hero_sections(*)')
-    .eq('owner', user.id)
-    .single()
 
   return (
     <UserProvider>

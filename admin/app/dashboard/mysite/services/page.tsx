@@ -8,8 +8,8 @@ import { handleFileUpload } from '@/utils/supabase/uploadFIle'
 interface ServiceItem {
   id: number
   title: string
-  description: string
-  image_url: string
+  description?: string
+  image_url?: string
 }
 
 export default function Services() {
@@ -24,6 +24,7 @@ export default function Services() {
       setTitle(siteData.services_sections.title || '')
       setServices(siteData.services_sections.services_items)
       setFolderUrl(siteData.url)
+      console.log(siteData)
     }
   }, [siteData])
 
