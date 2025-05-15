@@ -26,7 +26,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from("sites")
         .select(
-          `* , hero_sections(*), services_sections(*, services_items(*)), faqs_sections(*), portfolio_sections(*, portfolio_items(*)), testimonials_sections(*), teams(*)`
+          `* , hero_sections(*), services_sections(*, services_items(*)), faqs_sections(*, faqs_items(*)), portfolio_sections(*, portfolio_items(*)), testimonials_sections(*, testimonials(*)), teams(*, team_members(*))`
         )
         .eq("owner", user.id)
         .single();
