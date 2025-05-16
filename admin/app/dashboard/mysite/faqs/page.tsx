@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useSite } from "@/context/site-context";
-import { handleFileUpload } from "@/utils/supabase/uploadFIle";
-import { MdAdd } from "react-icons/md";
+import TextareaAutosize from "react-textarea-autosize";
 
 interface Faq {
   id: number;
@@ -18,12 +17,10 @@ export default function FAQs() {
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [folderUrl, setFolderUrl] = useState("");
   useEffect(() => {
     if (siteData) {
       setTitle(siteData.faqs_sections.title || "");
       setFaqs(siteData.faqs_sections.faqs_items);
-      setFolderUrl(siteData.url);
     }
     console.log(siteData);
   }, [siteData]);
@@ -71,7 +68,7 @@ export default function FAQs() {
       <h3 className="text-xl font-bold">Editar Sessão FAQs</h3>
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-6 w-full h-full"
+        className="flex flex-col gap-2 w-full h-full"
       >
         <div className="flex flex-col max-w-fit">
           <label className="font-medium">Título da sessão</label>
@@ -82,6 +79,7 @@ export default function FAQs() {
             className="p-2 border rounded "
           />
         </div>
+        <h4 className="font-medium">FAQs</h4>
         <div className="flex flex-col gap-4 items-center justify-left p-2 bg-gray-200">
           {faqs?.map((item, index) => (
             <div
@@ -89,7 +87,7 @@ export default function FAQs() {
               className="w-full bg-gray-200 flex flex-col overflow-hidden"
             >
               {item.question && (
-                <textarea
+                <TextareaAutosize
                   value={item.question}
                   className="p-2 border rounded w-full text-wrap"
                   onChange={(e) => {
@@ -100,7 +98,7 @@ export default function FAQs() {
                 />
               )}
               {item.answer && (
-                <textarea
+                <TextareaAutosize
                   value={item.answer}
                   className="p-2 border rounded w-full text-wrap"
                   onChange={(e) => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useSite } from "@/context/site-context";
 import { handleFileUpload } from "@/utils/supabase/uploadFIle";
-import { MdAdd } from "react-icons/md";
+import { MdEdit, MdSearch } from "react-icons/md";
 
 interface PortfolioItem {
   id: number;
@@ -111,7 +111,7 @@ export default function Portfolio() {
       <h3 className="text-xl font-bold">Editar Sessão Portfolio</h3>
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-6 w-full items-left"
+        className="flex flex-col gap-4 w-full items-left"
       >
         <div className="flex flex-col max-w-fit">
           <label className="font-medium">Título da sessão</label>
@@ -122,49 +122,58 @@ export default function Portfolio() {
             className="p-2 border rounded "
           />
         </div>
+        <h3 className="font-medium">Portfolio</h3>
         <div className="flex gap-2 items-center justify-left h-full">
           {portfolioItems?.map((item, index) => (
             <div
               key={item.id}
-              className="w-48 min-h-full bg-gray-200 flex flex-col overflow-hidden"
+              className="w-48 h-64 bg-gray-200 flex flex-col overflow-hidden"
             >
-              {item.title && (
-                <input
-                  type="text"
-                  value={item.title}
-                  className="p-2 border rounded w-full "
-                  onChange={(e) => {
-                    const updated = [...portfolioItems];
-                    updated[index] = { ...item, title: e.target.value };
-                    setPortfolioItems(updated);
-                  }}
-                />
-              )}
-              {item.subtitle && (
-                <input
-                  type="text"
-                  value={item.subtitle ? item.subtitle : ""}
-                  className="p-2 border rounded w-full text-sm"
-                  onChange={(e) => {
-                    const updated = [...portfolioItems];
-                    updated[index] = { ...item, subtitle: e.target.value };
-                    setPortfolioItems(updated);
-                  }}
-                />
-              )}
+              <input
+                type="text"
+                value={item.title ? item.title : ""}
+                className="p-2 border rounded w-full "
+                onChange={(e) => {
+                  const updated = [...portfolioItems];
+                  updated[index] = { ...item, title: e.target.value };
+                  setPortfolioItems(updated);
+                }}
+              />
 
-              <div className="flex flex-col grow items-center justify-center">
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt="Imagem atual"
-                    className="w-64 border p-4 bg-gray-200 rounded-lg grow"
-                  />
-                ) : (
-                  <MdAdd className="text-2xl grow" />
-                )}
-                <label className="mt-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-center">
-                  Selecionar imagem
+              <input
+                type="text"
+                value={item.subtitle ? item.subtitle : ""}
+                placeholder="Subtítulo..."
+                className="p-2 border rounded w-full text-sm"
+                onChange={(e) => {
+                  const updated = [...portfolioItems];
+                  updated[index] = { ...item, subtitle: e.target.value };
+                  setPortfolioItems(updated);
+                }}
+              />
+              <div className="flex flex-col items-center justify-center">
+                <label className="group relative cursor-pointer text-center inline-block w-full h-48 overflow-hidden">
+                  {item.image_url ? (
+                    <>
+                      <img
+                        src={item.image_url}
+                        alt="Imagem atual"
+                        className="object-contain bg-white"
+                      />
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span className="text-white text-3xl">
+                          <MdEdit />
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center  transition-opacity duration-300">
+                      <span className="text-white text-3xl">
+                        <MdSearch />
+                      </span>
+                    </div>
+                  )}
                   <input
                     type="file"
                     className="hidden"
