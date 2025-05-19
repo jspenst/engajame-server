@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useSite } from "@/context/site-context";
 import { handleFileUpload } from "@/utils/supabase/uploadFIle";
-import { MdEdit, MdSearch } from "react-icons/md";
+import { MdEdit, MdOutlineDeleteForever, MdSearch } from "react-icons/md";
 
 interface PortfolioItem {
   id: number;
@@ -64,6 +64,59 @@ export default function Portfolio() {
       );
       setMessage("Imagem atualizada com sucesso!");
     }
+  }
+
+  async function handleAddItem() {
+    if (!siteData?.portfolio_sections?.id) {
+      setMessage("Erro: ID da sessão de serviços não encontrado.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("portfolio_items")
+      .insert([
+        {
+          title: "Novo Item",
+          description: "",
+          image_url: "",
+          portfolio_section: siteData.portfolio_sections.id,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      setMessage("Erro ao adicionar item: " + error.message);
+      return;
+    }
+
+    setPortfolioItems((prev) => [...prev, data]);
+    setMessage("Item adicionado!");
+  }
+
+  async function handleDeleteItem(itemId: number) {
+    const confirmDelete = window.confirm(
+      "Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita."
+    );
+    if (!confirmDelete) return;
+
+    setLoading(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("portfolio_items")
+      .delete()
+      .eq("id", itemId);
+
+    if (error) {
+      setMessage("Erro ao excluir item: " + error.message);
+      setLoading(false);
+      return;
+    }
+
+    setPortfolioItems((prev) => prev.filter((item) => item.id !== itemId));
+    setMessage("Serviço excluído com sucesso!");
+    setLoading(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -127,7 +180,7 @@ export default function Portfolio() {
           {portfolioItems?.map((item, index) => (
             <div
               key={item.id}
-              className="w-48 h-64 bg-gray-200 flex flex-col overflow-hidden"
+              className="w-48 flex flex-col overflow-hidden gap-2 border shadow-lg"
             >
               <input
                 type="text"
@@ -181,16 +234,37 @@ export default function Portfolio() {
                   />
                 </label>
               </div>
+              <div className="flex justify-end w-full">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteItem(item.id)}
+                  className="bg-red-600 text-white py-2 px-4 rounded w-fit flex gap-2 m-2 items-center"
+                >
+                  Excluir
+                  <MdOutlineDeleteForever className="text-lg" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
-        <button
-          type="submit"
-          className="bg-blue-600 text-white py-2 px-4 rounded disabled:bg-blue-300 w-fit "
-          disabled={loading}
-        >
-          {loading ? "Salvando..." : "Salvar"}
-        </button>
+
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={handleAddItem}
+            className="bg-green-600 text-white py-2 px-4 rounded w-fit"
+          >
+            Adicionar novo serviço
+          </button>
+
+          <button
+            type="submit"
+            className="bg-blue-600 text-white py-2 px-4 rounded disabled:bg-blue-300 w-fit "
+            disabled={loading}
+          >
+            {loading ? "Salvando..." : "Salvar Alterações"}
+          </button>
+        </div>
 
         {message && (
           <div className="text-sm text-center mt-2 text-green-700">

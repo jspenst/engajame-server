@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useSite } from "@/context/site-context";
 import { handleFileUpload } from "@/utils/supabase/uploadFIle";
-import { MdEdit, MdSearch } from "react-icons/md";
+import { MdEdit, MdOutlineDeleteForever, MdSearch } from "react-icons/md";
 import TextareaAutosize from "react-textarea-autosize";
 
 interface ServiceItem {
@@ -65,6 +65,59 @@ export default function Services() {
       );
       setMessage("Imagem atualizada com sucesso!");
     }
+  }
+
+  async function handleAddService() {
+    if (!siteData?.services_sections?.id) {
+      setMessage("Erro: ID da sessão de serviços não encontrado.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("services_items")
+      .insert([
+        {
+          title: "Novo Serviço",
+          description: "",
+          image_url: "",
+          service_section: siteData.services_sections.id,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      setMessage("Erro ao adicionar serviço: " + error.message);
+      return;
+    }
+
+    setServices((prev) => [...prev, data]);
+    setMessage("Serviço adicionado!");
+  }
+
+  async function handleDeleteService(serviceId: number) {
+    const confirmDelete = window.confirm(
+      "Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita."
+    );
+    if (!confirmDelete) return;
+
+    setLoading(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("services_items")
+      .delete()
+      .eq("id", serviceId);
+
+    if (error) {
+      setMessage("Erro ao excluir serviço: " + error.message);
+      setLoading(false);
+      return;
+    }
+
+    setServices((prev) => prev.filter((service) => service.id !== serviceId));
+    setMessage("Serviço excluído com sucesso!");
+    setLoading(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -187,18 +240,37 @@ export default function Services() {
                     }}
                   />
                 </div>
+                <div className="flex justify-end w-full">
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteService(service.id)}
+                    className="bg-red-600 text-white py-2 px-4 rounded w-fit flex gap-2 items-center"
+                  >
+                    Excluir
+                    <MdOutlineDeleteForever className="text-lg" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={handleAddService}
+            className="bg-green-600 text-white py-2 px-4 rounded w-fit"
+          >
+            Adicionar novo serviço
+          </button>
 
-        <button
-          type="submit"
-          className="bg-blue-600 text-white py-2 px-4 rounded disabled:bg-blue-300 w-fit "
-          disabled={loading}
-        >
-          {loading ? "Salvando..." : "Salvar"}
-        </button>
+          <button
+            type="submit"
+            className="bg-blue-600 text-white py-2 px-4 rounded disabled:bg-blue-300 w-fit "
+            disabled={loading}
+          >
+            {loading ? "Salvando..." : "Salvar Alterações"}
+          </button>
+        </div>
 
         {message && (
           <div className="text-sm text-center mt-2 text-green-700">
