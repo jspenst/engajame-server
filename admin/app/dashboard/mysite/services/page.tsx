@@ -1,160 +1,160 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { useSite } from "@/context/site-context";
-import { handleFileUpload } from "@/utils/supabase/uploadFIle";
-import { MdEdit, MdOutlineDeleteForever, MdSearch } from "react-icons/md";
-import TextareaAutosize from "react-textarea-autosize";
+import { useEffect, useState } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import { useSite } from '@/context/site-context'
+import { handleFileUpload } from '@/utils/supabase/uploadFIle'
+import { MdEdit, MdOutlineDeleteForever, MdSearch } from 'react-icons/md'
+import TextareaAutosize from 'react-textarea-autosize'
 
 interface ServiceItem {
-  id: number;
-  title: string;
-  description?: string;
-  image_url?: string;
+  id: number
+  title: string
+  description?: string
+  image_url?: string
 }
 
 export default function Services() {
-  const { siteData } = useSite();
-  const [title, setTitle] = useState("");
-  const [services, setServices] = useState<ServiceItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [folderUrl, setFolderUrl] = useState("");
+  const { siteData } = useSite()
+  const [title, setTitle] = useState('')
+  const [services, setServices] = useState<ServiceItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [folderUrl, setFolderUrl] = useState('')
   useEffect(() => {
     if (siteData) {
-      setTitle(siteData.services_sections.title || "");
-      setServices(siteData.services_sections.services_items);
-      setFolderUrl(siteData.url);
-      console.log(siteData);
+      setTitle(siteData.services_sections.title || '')
+      setServices(siteData.services_sections.services_items)
+      setFolderUrl(siteData.url)
+      console.log(siteData)
     }
-  }, [siteData]);
+  }, [siteData])
 
-  const supabase = createClient();
+  const supabase = createClient()
 
   async function handleImageChange(
     e: React.ChangeEvent<HTMLInputElement>,
     service: ServiceItem
   ) {
     if (!folderUrl) {
-      setMessage("Erro: Caminho da pasta não definido. Verifique o site_url.");
-      return;
+      setMessage('Erro: Caminho da pasta não definido. Verifique o site_url.')
+      return
     }
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    console.log("folderUrl na hora do upload:", folderUrl);
+    console.log('folderUrl na hora do upload:', folderUrl)
 
     const url = await handleFileUpload(
       file,
       `${folderUrl}/${Date.now()}-${file.name}`
-    );
-    if (!url) return;
+    )
+    if (!url) return
 
     const { error } = await supabase
-      .from("services_items")
+      .from('services_items')
       .update({ image_url: url })
-      .eq("id", service.id);
+      .eq('id', service.id)
 
     if (error) {
-      setMessage("Erro ao atualizar imagem: " + error.message);
+      setMessage('Erro ao atualizar imagem: ' + error.message)
     } else {
       // Atualiza o estado local
       setServices((prev) =>
         prev.map((s) => (s.id === service.id ? { ...s, image_url: url } : s))
-      );
-      setMessage("Imagem atualizada com sucesso!");
+      )
+      setMessage('Imagem atualizada com sucesso!')
     }
   }
 
   async function handleAddService() {
     if (!siteData?.services_sections?.id) {
-      setMessage("Erro: ID da sessão de serviços não encontrado.");
-      return;
+      setMessage('Erro: ID da sessão de serviços não encontrado.')
+      return
     }
 
     const { data, error } = await supabase
-      .from("services_items")
+      .from('services_items')
       .insert([
         {
-          title: "Novo Serviço",
-          description: "",
-          image_url: "",
+          title: 'Novo Serviço',
+          description: '',
+          image_url: '',
           service_section: siteData.services_sections.id,
         },
       ])
       .select()
-      .single();
+      .single()
 
     if (error) {
-      setMessage("Erro ao adicionar serviço: " + error.message);
-      return;
+      setMessage('Erro ao adicionar serviço: ' + error.message)
+      return
     }
 
-    setServices((prev) => [...prev, data]);
-    setMessage("Serviço adicionado!");
+    setServices((prev) => [...prev, data])
+    setMessage('Serviço adicionado!')
   }
 
   async function handleDeleteService(serviceId: number) {
     const confirmDelete = window.confirm(
-      "Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita."
-    );
-    if (!confirmDelete) return;
+      'Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.'
+    )
+    if (!confirmDelete) return
 
-    setLoading(true);
-    setMessage("");
+    setLoading(true)
+    setMessage('')
 
     const { error } = await supabase
-      .from("services_items")
+      .from('services_items')
       .delete()
-      .eq("id", serviceId);
+      .eq('id', serviceId)
 
     if (error) {
-      setMessage("Erro ao excluir serviço: " + error.message);
-      setLoading(false);
-      return;
+      setMessage('Erro ao excluir serviço: ' + error.message)
+      setLoading(false)
+      return
     }
 
-    setServices((prev) => prev.filter((service) => service.id !== serviceId));
-    setMessage("Serviço excluído com sucesso!");
-    setLoading(false);
+    setServices((prev) => prev.filter((service) => service.id !== serviceId))
+    setMessage('Serviço excluído com sucesso!')
+    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
 
     const { error: titleError } = await supabase
-      .from("services_sections")
+      .from('services_sections')
       .update({ title })
-      .eq("id", siteData.services_sections.id);
+      .eq('id', siteData.services_sections.id)
 
     if (titleError) {
-      setMessage("Erro ao atualizar título: " + titleError.message);
-      setLoading(false);
-      return;
+      setMessage('Erro ao atualizar título: ' + titleError.message)
+      setLoading(false)
+      return
     }
 
     for (const service of services) {
       const { error } = await supabase
-        .from("services_items")
+        .from('services_items')
         .update({
           title: service.title,
           description: service.description,
           image_url: service.image_url,
         })
-        .eq("id", service.id);
+        .eq('id', service.id)
 
       if (error) {
-        setMessage(`Erro ao atualizar serviço ${service.id}: ` + error.message);
-        setLoading(false);
-        return;
+        setMessage(`Erro ao atualizar serviço ${service.id}: ` + error.message)
+        setLoading(false)
+        return
       }
     }
 
-    setMessage("Atualizado com sucesso!");
-    setLoading(false);
+    setMessage('Atualizado com sucesso!')
+    setLoading(false)
   }
 
   return (
@@ -179,7 +179,7 @@ export default function Services() {
           {services?.map((service, index) => (
             <div
               key={service.id}
-              className="flex gap-2 h-full w-fit p-4 border rounded shadow"
+              className="flex gap-2 h-full w-full p-4 my-4 border rounded shadow"
             >
               <div className="flex flex-col items-center justify-center p-2">
                 <label className="group relative cursor-pointer rounded-lg text-center inline-block w-48 h-48 overflow-hidden">
@@ -211,32 +211,32 @@ export default function Services() {
                   />
                 </label>
               </div>
-              <div className="flex flex-col gap-2 h-full">
+              <div className="flex flex-col gap-2 h-full w-full">
                 <div className="flex gap-2 items-center place-content-between w-full">
-                  <label>Serviço</label>
+                  <label className="w-20">Serviço</label>
                   <input
                     type="text"
                     value={service.title}
-                    className="p-2 border rounded w-64 "
+                    className="p-2 border rounded w-full "
                     onChange={(e) => {
-                      const updated = [...services];
-                      updated[index] = { ...service, title: e.target.value };
-                      setServices(updated);
+                      const updated = [...services]
+                      updated[index] = { ...service, title: e.target.value }
+                      setServices(updated)
                     }}
                   />
                 </div>
-                <div className="flex gap-2 grow items-center">
-                  <label>Descrição</label>
+                <div className="flex gap-2 grow items-center w-full">
+                  <label className="w-20">Descrição</label>
                   <TextareaAutosize
                     value={service.description}
-                    className="p-2 border rounded w-64"
+                    className="p-2 border rounded w-64 w-full"
                     onChange={(e) => {
-                      const updated = [...services];
+                      const updated = [...services]
                       updated[index] = {
                         ...service,
                         description: e.target.value,
-                      };
-                      setServices(updated);
+                      }
+                      setServices(updated)
                     }}
                   />
                 </div>
@@ -268,7 +268,7 @@ export default function Services() {
             className="bg-blue-600 text-white py-2 px-4 rounded disabled:bg-blue-300 w-fit "
             disabled={loading}
           >
-            {loading ? "Salvando..." : "Salvar Alterações"}
+            {loading ? 'Salvando...' : 'Salvar Alterações'}
           </button>
         </div>
 
@@ -279,5 +279,5 @@ export default function Services() {
         )}
       </form>
     </div>
-  );
+  )
 }

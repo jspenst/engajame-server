@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useSite } from '@/context/site-context'
 import { handleFileUpload } from '@/utils/supabase/uploadFIle'
-import { MdAdd, MdEdit, MdOutlineDeleteForever, MdSearch } from 'react-icons/md'
+import { MdEdit, MdOutlineDeleteForever, MdSearch } from 'react-icons/md'
+import TextareaAutosize from 'react-textarea-autosize'
 
 interface TeamMember {
   id: number
@@ -77,9 +78,8 @@ export default function Team() {
       .from('team_members')
       .insert([
         {
-          name: 'Novo Membro',
+          name: '',
           profession: '',
-          image_url: '',
           team: siteData.teams.id,
         },
       ])
@@ -179,7 +179,7 @@ export default function Team() {
           {teamMembers?.map((item, index) => (
             <div
               key={item.id}
-              className="w-48 flex flex-col overflow-hidden border p-1 shadow-lg"
+              className="w-48 flex flex-col overflow-hidden border p-1 shadow-lg h-full place-content-between"
             >
               <input
                 type="text"
@@ -204,17 +204,17 @@ export default function Team() {
                   setTeamMembers(updated)
                 }}
               />
-              <div className="flex flex-col items-center justify-center">
-                <label className="group relative cursor-pointer rounded-lg text-center inline-block w-64 h-64 overflow-hidden">
-                  {item.image_url ? (
+              <div className="flex flex-col items-center justify-center w-full">
+                <label className="group relative cursor-pointer rounded-lg text-center inline-block overflow-hidden flex items-center justify-center w-44 h-44 my-2">
+                  {!(item.image_url === null || item.image_url === '') ? (
                     <>
                       <img
                         src={item.image_url}
                         alt="Imagem atual"
-                        className="w-64 h-64 object-contain rounded-lg bg-white"
+                        className="object-contain rounded-lg bg-white"
                       />
                       {/* Overlay */}
-                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 ">
                         <span className="text-white text-3xl">
                           <MdEdit />
                         </span>
@@ -234,6 +234,16 @@ export default function Team() {
                   />
                 </label>
               </div>
+              <TextareaAutosize
+                value={item.description ? item.description : ''}
+                placeholder="Descrição"
+                className="p-2 border rounded w-full text-sm"
+                onChange={(e) => {
+                  const updated = [...teamMembers]
+                  updated[index] = { ...item, description: e.target.value }
+                  setTeamMembers(updated)
+                }}
+              />
               <div className="flex justify-end w-full">
                 <button
                   type="button"
