@@ -1,162 +1,162 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { useSite } from "@/context/site-context";
-import { handleFileUpload } from "@/utils/supabase/uploadFIle";
-import { MdEdit, MdOutlineDeleteForever, MdSearch } from "react-icons/md";
+import { useEffect, useState } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import { useSite } from '@/context/site-context'
+import { handleFileUpload } from '@/utils/supabase/uploadFIle'
+import { MdEdit, MdOutlineDeleteForever, MdSearch } from 'react-icons/md'
 
 interface PortfolioItem {
-  id: number;
-  title: string;
-  subtitle?: string;
-  description?: string;
-  image_url?: string;
+  id: number
+  title: string
+  subtitle?: string
+  description?: string
+  image_url?: string
 }
 
 export default function Portfolio() {
-  const { siteData } = useSite();
-  const [title, setTitle] = useState("");
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [folderUrl, setFolderUrl] = useState("");
+  const { siteData } = useSite()
+  const [title, setTitle] = useState('')
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [folderUrl, setFolderUrl] = useState('')
   useEffect(() => {
     if (siteData) {
-      setTitle(siteData.portfolio_sections.title || "");
-      setPortfolioItems(siteData.portfolio_sections.portfolio_items);
-      setFolderUrl(siteData.url);
+      setTitle(siteData.portfolio_sections.title || '')
+      setPortfolioItems(siteData.portfolio_sections.portfolio_items)
+      setFolderUrl(siteData.url)
     }
-  }, [siteData]);
+  }, [siteData])
 
-  const supabase = createClient();
+  const supabase = createClient()
 
   async function handleImageChange(
     e: React.ChangeEvent<HTMLInputElement>,
     service: PortfolioItem
   ) {
     if (!folderUrl) {
-      setMessage("Erro: Caminho da pasta não definido. Verifique o site_url.");
-      return;
+      setMessage('Erro: Caminho da pasta não definido. Verifique o site_url.')
+      return
     }
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    console.log("folderUrl na hora do upload:", folderUrl);
+    console.log('folderUrl na hora do upload:', folderUrl)
 
     const url = await handleFileUpload(
       file,
       `${folderUrl}/${Date.now()}-${file.name}`
-    );
-    if (!url) return;
+    )
+    if (!url) return
 
     const { error } = await supabase
-      .from("portfolio_items")
+      .from('portfolio_items')
       .update({ image_url: url })
-      .eq("id", service.id);
+      .eq('id', service.id)
 
     if (error) {
-      setMessage("Erro ao atualizar imagem: " + error.message);
+      setMessage('Erro ao atualizar imagem: ' + error.message)
     } else {
       // Atualiza o estado local
       setPortfolioItems((prev) =>
         prev.map((s) => (s.id === service.id ? { ...s, image_url: url } : s))
-      );
-      setMessage("Imagem atualizada com sucesso!");
+      )
+      setMessage('Imagem atualizada com sucesso!')
     }
   }
 
   async function handleAddItem() {
     if (!siteData?.portfolio_sections?.id) {
-      setMessage("Erro: ID da sessão de serviços não encontrado.");
-      return;
+      setMessage('Erro: ID da sessão de serviços não encontrado.')
+      return
     }
 
     const { data, error } = await supabase
-      .from("portfolio_items")
+      .from('portfolio_items')
       .insert([
         {
-          title: "Novo Item",
-          description: "",
-          image_url: "",
+          title: 'Novo Item',
+          description: '',
+          image_url: '',
           portfolio_section: siteData.portfolio_sections.id,
         },
       ])
       .select()
-      .single();
+      .single()
 
     if (error) {
-      setMessage("Erro ao adicionar item: " + error.message);
-      return;
+      setMessage('Erro ao adicionar item: ' + error.message)
+      return
     }
 
-    setPortfolioItems((prev) => [...prev, data]);
-    setMessage("Item adicionado!");
+    setPortfolioItems((prev) => [...prev, data])
+    setMessage('Item adicionado!')
   }
 
   async function handleDeleteItem(itemId: number) {
     const confirmDelete = window.confirm(
-      "Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita."
-    );
-    if (!confirmDelete) return;
+      'Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.'
+    )
+    if (!confirmDelete) return
 
-    setLoading(true);
-    setMessage("");
+    setLoading(true)
+    setMessage('')
 
     const { error } = await supabase
-      .from("portfolio_items")
+      .from('portfolio_items')
       .delete()
-      .eq("id", itemId);
+      .eq('id', itemId)
 
     if (error) {
-      setMessage("Erro ao excluir item: " + error.message);
-      setLoading(false);
-      return;
+      setMessage('Erro ao excluir item: ' + error.message)
+      setLoading(false)
+      return
     }
 
-    setPortfolioItems((prev) => prev.filter((item) => item.id !== itemId));
-    setMessage("Serviço excluído com sucesso!");
-    setLoading(false);
+    setPortfolioItems((prev) => prev.filter((item) => item.id !== itemId))
+    setMessage('Item excluído com sucesso!')
+    setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
 
     const { error: titleError } = await supabase
-      .from("portfolio_sections")
+      .from('portfolio_sections')
       .update({ title })
-      .eq("id", siteData.portfolio_sections.id);
+      .eq('id', siteData.portfolio_sections.id)
 
     if (titleError) {
-      setMessage("Erro ao atualizar título: " + titleError.message);
-      setLoading(false);
-      return;
+      setMessage('Erro ao atualizar título: ' + titleError.message)
+      setLoading(false)
+      return
     }
 
     for (const portfolioItem of portfolioItems) {
       const { error } = await supabase
-        .from("portfolio_items")
+        .from('portfolio_items')
         .update({
           title: portfolioItem.title,
           subtitle: portfolioItem.subtitle,
           description: portfolioItem.description,
           image_url: portfolioItem.image_url,
         })
-        .eq("id", portfolioItem.id);
+        .eq('id', portfolioItem.id)
 
       if (error) {
         setMessage(
           `Erro ao atualizar portfolio ${portfolioItem.id}: ` + error.message
-        );
-        setLoading(false);
-        return;
+        )
+        setLoading(false)
+        return
       }
     }
 
-    setMessage("Atualizado com sucesso!");
-    setLoading(false);
+    setMessage('Atualizado com sucesso!')
+    setLoading(false)
   }
 
   return (
@@ -184,24 +184,24 @@ export default function Portfolio() {
             >
               <input
                 type="text"
-                value={item.title ? item.title : ""}
+                value={item.title ? item.title : ''}
                 className="p-2 border rounded w-full "
                 onChange={(e) => {
-                  const updated = [...portfolioItems];
-                  updated[index] = { ...item, title: e.target.value };
-                  setPortfolioItems(updated);
+                  const updated = [...portfolioItems]
+                  updated[index] = { ...item, title: e.target.value }
+                  setPortfolioItems(updated)
                 }}
               />
 
               <input
                 type="text"
-                value={item.subtitle ? item.subtitle : ""}
+                value={item.subtitle ? item.subtitle : ''}
                 placeholder="Subtítulo..."
                 className="p-2 border rounded w-full text-sm"
                 onChange={(e) => {
-                  const updated = [...portfolioItems];
-                  updated[index] = { ...item, subtitle: e.target.value };
-                  setPortfolioItems(updated);
+                  const updated = [...portfolioItems]
+                  updated[index] = { ...item, subtitle: e.target.value }
+                  setPortfolioItems(updated)
                 }}
               />
               <div className="flex flex-col items-center justify-center">
@@ -254,7 +254,7 @@ export default function Portfolio() {
             onClick={handleAddItem}
             className="bg-green-600 text-white py-2 px-4 rounded w-fit"
           >
-            Adicionar novo serviço
+            Adicionar novo item
           </button>
 
           <button
@@ -262,7 +262,7 @@ export default function Portfolio() {
             className="bg-blue-600 text-white py-2 px-4 rounded disabled:bg-blue-300 w-fit "
             disabled={loading}
           >
-            {loading ? "Salvando..." : "Salvar Alterações"}
+            {loading ? 'Salvando...' : 'Salvar Alterações'}
           </button>
         </div>
 
@@ -273,5 +273,5 @@ export default function Portfolio() {
         )}
       </form>
     </div>
-  );
+  )
 }

@@ -1,108 +1,161 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { useSite } from "@/context/site-context";
-import { handleFileUpload } from "@/utils/supabase/uploadFIle";
-import { MdAdd, MdEdit, MdSearch } from "react-icons/md";
+import { useEffect, useState } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import { useSite } from '@/context/site-context'
+import { handleFileUpload } from '@/utils/supabase/uploadFIle'
+import { MdAdd, MdEdit, MdOutlineDeleteForever, MdSearch } from 'react-icons/md'
 
 interface TeamMember {
-  id: number;
-  name: string;
-  profession?: string;
-  description?: string;
-  image_url?: string;
+  id: number
+  name: string
+  profession?: string
+  description?: string
+  image_url?: string
 }
 
 export default function Team() {
-  const { siteData } = useSite();
-  const [title, setTitle] = useState("");
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [folderUrl, setFolderUrl] = useState("");
+  const { siteData } = useSite()
+  const [title, setTitle] = useState('')
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [folderUrl, setFolderUrl] = useState('')
   useEffect(() => {
     if (siteData) {
-      setTitle(siteData.teams.title || "");
-      setTeamMembers(siteData.teams.team_members);
-      setFolderUrl(siteData.url);
+      setTitle(siteData.teams.title || '')
+      setTeamMembers(siteData.teams.team_members)
+      setFolderUrl(siteData.url)
     }
-    console.log(siteData);
-  }, [siteData]);
+    console.log(siteData)
+  }, [siteData])
 
-  const supabase = createClient();
+  const supabase = createClient()
 
   async function handleImageChange(
     e: React.ChangeEvent<HTMLInputElement>,
     member: TeamMember
   ) {
     if (!folderUrl) {
-      setMessage("Erro: Caminho da pasta não definido. Verifique o site_url.");
-      return;
+      setMessage('Erro: Caminho da pasta não definido. Verifique o site_url.')
+      return
     }
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    console.log("folderUrl na hora do upload:", folderUrl);
+    console.log('folderUrl na hora do upload:', folderUrl)
 
     const url = await handleFileUpload(
       file,
       `${folderUrl}/${Date.now()}-${file.name}`
-    );
-    if (!url) return;
+    )
+    if (!url) return
 
     const { error } = await supabase
-      .from("team_members")
+      .from('team_members')
       .update({ image_url: url })
-      .eq("id", member.id);
+      .eq('id', member.id)
 
     if (error) {
-      setMessage("Erro ao atualizar imagem: " + error.message);
+      setMessage('Erro ao atualizar imagem: ' + error.message)
     } else {
       // Atualiza o estado local
       setTeamMembers((prev) =>
         prev.map((s) => (s.id === member.id ? { ...s, image_url: url } : s))
-      );
-      setMessage("Imagem atualizada com sucesso!");
+      )
+      setMessage('Imagem atualizada com sucesso!')
     }
   }
 
+  async function handleAddItem() {
+    if (!siteData?.teams?.id) {
+      setMessage('Erro: ID da sessão de serviços não encontrado.')
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('team_members')
+      .insert([
+        {
+          name: 'Novo Membro',
+          profession: '',
+          image_url: '',
+          team: siteData.teams.id,
+        },
+      ])
+      .select()
+      .single()
+
+    if (error) {
+      setMessage('Erro ao adicionar membro: ' + error.message)
+      return
+    }
+
+    setTeamMembers((prev) => [...prev, data])
+    setMessage('Membro adicionado!')
+  }
+
+  async function handleDeleteItem(itemId: number) {
+    const confirmDelete = window.confirm(
+      'Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.'
+    )
+    if (!confirmDelete) return
+
+    setLoading(true)
+    setMessage('')
+
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('id', itemId)
+
+    if (error) {
+      setMessage('Erro ao excluir item: ' + error.message)
+      setLoading(false)
+      return
+    }
+
+    setTeamMembers((prev) => prev.filter((item) => item.id !== itemId))
+    setMessage('Membro excluído com sucesso!')
+    setLoading(false)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
 
     const { error: titleError } = await supabase
-      .from("teams")
+      .from('teams')
       .update({ title })
-      .eq("id", siteData.teams.id);
+      .eq('id', siteData.teams.id)
 
     if (titleError) {
-      setMessage("Erro ao atualizar título: " + titleError.message);
-      setLoading(false);
-      return;
+      setMessage('Erro ao atualizar título: ' + titleError.message)
+      setLoading(false)
+      return
     }
 
     for (const member of teamMembers) {
       const { error } = await supabase
-        .from("team_members")
+        .from('team_members')
         .update({
           name: member.name,
           profession: member.profession,
           description: member.description,
           image_url: member.image_url,
         })
-        .eq("id", member.id);
+        .eq('id', member.id)
 
       if (error) {
-        setMessage(`Erro ao atualizar Membro ${member.id}: ` + error.message);
-        setLoading(false);
-        return;
+        setMessage(`Erro ao atualizar Membro ${member.id}: ` + error.message)
+        setLoading(false)
+        return
       }
     }
 
-    setMessage("Atualizado com sucesso!");
-    setLoading(false);
+    setMessage('Atualizado com sucesso!')
+    setLoading(false)
   }
 
   return (
@@ -130,25 +183,25 @@ export default function Team() {
             >
               <input
                 type="text"
-                value={item.name ? item.name : ""}
+                value={item.name ? item.name : ''}
                 placeholder="Nome"
                 className="p-2 border rounded w-full"
                 onChange={(e) => {
-                  const updated = [...teamMembers];
-                  updated[index] = { ...item, name: e.target.value };
-                  setTeamMembers(updated);
+                  const updated = [...teamMembers]
+                  updated[index] = { ...item, name: e.target.value }
+                  setTeamMembers(updated)
                 }}
               />
 
               <input
                 type="text"
-                value={item.profession ? item.profession : ""}
+                value={item.profession ? item.profession : ''}
                 placeholder="Profissão"
                 className="p-2 border rounded w-full text-sm"
                 onChange={(e) => {
-                  const updated = [...teamMembers];
-                  updated[index] = { ...item, profession: e.target.value };
-                  setTeamMembers(updated);
+                  const updated = [...teamMembers]
+                  updated[index] = { ...item, profession: e.target.value }
+                  setTeamMembers(updated)
                 }}
               />
               <div className="flex flex-col items-center justify-center">
@@ -181,35 +234,36 @@ export default function Team() {
                   />
                 </label>
               </div>
-              {/*<div className="flex flex-col grow items-center justify-center">
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt="Imagem atual"
-                    className="w-64 border p-4 bg-gray-200 rounded-lg grow"
-                  />
-                ) : (
-                  <MdAdd className="text-2xl grow" />
-                )}
-                <label className="mt-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-center">
-                  Selecionar imagem
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={(e) => handleImageChange(e, item)}
-                  />
-                </label>
-              </div> */}
+              <div className="flex justify-end w-full">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteItem(item.id)}
+                  className="bg-red-600 text-white py-2 px-4 rounded w-fit flex gap-2 m-2 items-center"
+                >
+                  Excluir
+                  <MdOutlineDeleteForever className="text-lg" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
-        <button
-          type="submit"
-          className="bg-blue-600 text-white py-2 px-4 rounded disabled:bg-blue-300 w-fit "
-          disabled={loading}
-        >
-          {loading ? "Salvando..." : "Salvar"}
-        </button>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={handleAddItem}
+            className="bg-green-600 text-white py-2 px-4 rounded w-fit"
+          >
+            Adicionar novo item
+          </button>
+
+          <button
+            type="submit"
+            className="bg-blue-600 text-white py-2 px-4 rounded disabled:bg-blue-300 w-fit "
+            disabled={loading}
+          >
+            {loading ? 'Salvando...' : 'Salvar Alterações'}
+          </button>
+        </div>
 
         {message && (
           <div className="text-sm text-center mt-2 text-green-700">
@@ -218,5 +272,5 @@ export default function Team() {
         )}
       </form>
     </div>
-  );
+  )
 }
